@@ -1,8 +1,7 @@
 'use client';
 
 import type { SourceRow } from '@/server/repositories/analyticsRepository';
-import { ROW_HOVER } from '@/lib/dashboard/theme';
-import { cn } from '@/lib/cn';
+import { Table, Td, Th, Tr } from '@/components/dashboard/common/Table';
 
 export function SourcesTable({
   rows,
@@ -16,36 +15,25 @@ export function SourcesTable({
   }
 
   return (
-    <table className="w-full text-left text-sm">
+    <Table>
       <thead>
-        <tr className="text-white/40">
-          <th className="pb-2 font-medium">Source</th>
-          <th className="pb-2 text-right font-medium">Entries</th>
-          <th className="pb-2 text-right font-medium">Completions</th>
-          <th className="pb-2 text-right font-medium">Conversion</th>
+        <tr>
+          <Th>Source</Th>
+          <Th align="right">Entries</Th>
+          <Th align="right">Completions</Th>
+          <Th align="right">Conversion</Th>
         </tr>
       </thead>
       <tbody>
         {rows.map((row) => (
-          <tr
-            key={row.source}
-            onClick={() => onSelectSource(row.source)}
-            className={cn(
-              'cursor-pointer border-t border-white/[0.06]',
-              ROW_HOVER,
-            )}
-          >
-            <td className="py-2.5 font-medium text-violet-300">{row.source}</td>
-            <td className="py-2.5 text-right text-white/70">{row.entries}</td>
-            <td className="py-2.5 text-right text-white/70">
-              {row.completions}
-            </td>
-            <td className="py-2.5 text-right text-white/70">
-              {row.conversion}%
-            </td>
-          </tr>
+          <Tr key={row.source} onClick={() => onSelectSource(row.source)}>
+            <Td className="font-medium text-violet-300">{row.source}</Td>
+            <Td align="right">{row.entries}</Td>
+            <Td align="right">{row.completions}</Td>
+            <Td align="right">{row.conversion}%</Td>
+          </Tr>
         ))}
       </tbody>
-    </table>
+    </Table>
   );
 }
