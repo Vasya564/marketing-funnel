@@ -14,7 +14,11 @@ const PLAN_FEATURES = [
   'Cancel anytime — no questions asked',
 ];
 
-export function PaywallView({ initialPurchased }: { initialPurchased: boolean }) {
+export function PaywallView({
+  initialPurchased,
+}: {
+  initialPurchased: boolean;
+}) {
   const [purchased, setPurchased] = useState(initialPurchased);
   const [processing, setProcessing] = useState(false);
 

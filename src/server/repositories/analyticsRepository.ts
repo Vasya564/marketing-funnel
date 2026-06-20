@@ -1,13 +1,10 @@
 import { getRawSql } from '@/db';
 import { FunnelEvent } from '@/lib/events';
 import { ResolvedFilters } from '@/lib/filters';
+import { buildFunnel, rate } from '@/lib/metrics';
+import type { FunnelStage } from '@/lib/metrics';
 
-export type FunnelStage = {
-  key: string;
-  label: string;
-  count: number;
-  conversionFromPrevious: number | null;
-};
+export type { FunnelStage };
 
 export type SourceRow = {
   source: string;
@@ -52,14 +49,6 @@ export type DashboardData = {
 
 const RANKED_VISITS =
   'with v as (select *, row_number() over (partition by user_id order by started_at asc) as visit_rank from visits)';
-
-function rate(numerator: number, denominator: number): number {
-  if (denominator === 0) {
-    return 0;
-  }
-
-  return Math.round((numerator / denominator) * 1000) / 10;
-}
 
 function placeholder(params: unknown[], value: unknown): string {
   params.push(value);
@@ -119,27 +108,6 @@ async function stageCounts(
   )) as { type: string; count: number }[];
 
   return Object.fromEntries(rows.map((row) => [row.type, row.count]));
-}
-
-function buildFunnel(counts: Record<string, number>): FunnelStage[] {
-  const stages = [
-    { key: FunnelEvent.QuizStarted, label: 'Quiz started' },
-    { key: FunnelEvent.EmailSubmitted, label: 'Email submitted' },
-    { key: FunnelEvent.PaywallVisited, label: 'Paywall visited' },
-    { key: FunnelEvent.PurchaseClicked, label: 'Purchase clicked' },
-  ];
-
-  return stages.map((stage, index) => {
-    const count = counts[stage.key] ?? 0;
-    const previous = index === 0 ? null : (counts[stages[index - 1].key] ?? 0);
-
-    return {
-      key: stage.key,
-      label: stage.label,
-      count,
-      conversionFromPrevious: previous === null ? null : rate(count, previous),
-    };
-  });
 }
 
 async function audienceBreakdown(
