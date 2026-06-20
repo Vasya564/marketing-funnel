@@ -37,7 +37,7 @@ conversion, traffic sources, and first/last-touch attribution.
 
 Append-only `events` table, past-tense naming:
 `quiz_started`, `email_submitted`, `paywall_visited`, `purchase_clicked`
-(completion = `purchase_clicked` on the mock Pay button).
+(completion = `purchase_clicked` on the Pay button).
 
 ## Local setup
 
@@ -70,8 +70,35 @@ Track funnel state by adding UTM params, e.g. `/?utm_source=google`.
 4. **Attribution** — first-touch and last-touch differ once the source changes
    between visits.
 
+## Testing
+
+```bash
+npm test            # Vitest unit tests (funnel metrics, filters, utm, email)
+npm run smoke       # end-to-end funnel run against a running dev server
+```
+
+Unit tests cover the pure logic (conversion math, filter parsing, UTM, email
+validation). `smoke.ts` drives the full new-user → returning-user flow over HTTP.
+
+## Project structure
+
+```
+src/
+  app/                pages (/ /email /paywall /dashboard) + API routes
+  components/
+    funnel/           funnel UI (shell, progress, paywall view)
+    dashboard/        dashboard UI, grouped: charts/ tables/ timeline/ filters/ ...
+  server/
+    repositories/     data access (user/visit/event/visitor/analytics)
+    services/         business logic (funnelService: tracking + identity)
+  lib/                framework-free helpers (env, jwt, cookies, utm, metrics, ...)
+  db/                 Drizzle schema + lazy Neon client
+```
+
 ## Scaling note
 
+Hot columns are indexed (`events.type`, `events.visit_id`, `events(user_id,
+type)`, `visits(user_id, started_at)`, `visits.source`, `users.first_touch_source`).
 For the MVP, events live in the same Postgres as users — fine at this volume.
 At scale, partition `events` by `created_at`, move it to a dedicated analytics
 store / read replica, or adopt a column store (e.g. ClickHouse).

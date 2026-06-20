@@ -96,7 +96,7 @@ async function stageCounts(
 ): Promise<Record<string, number>> {
   const params: unknown[] = [];
   const where = visitWhere(filters, params, { includeAudience: true });
-  const rows = (await getRawSql().query(
+  const eventCounts = (await getRawSql().query(
     `${RANKED_VISITS}
      select e.type, count(*)::int as count
      from events e join v on v.id = e.visit_id
@@ -105,7 +105,9 @@ async function stageCounts(
     params,
   )) as { type: string; count: number }[];
 
-  return Object.fromEntries(rows.map((row) => [row.type, row.count]));
+  return Object.fromEntries(
+    eventCounts.map((eventCount) => [eventCount.type, eventCount.count]),
+  );
 }
 
 async function audienceBreakdown(
@@ -135,7 +137,7 @@ async function trafficSources(filters: ResolvedFilters): Promise<SourceRow[]> {
   const params: unknown[] = [];
   const purchase = placeholder(params, FunnelEvent.PurchaseClicked);
   const where = visitWhere(filters, params, { includeAudience: true });
-  const rows = (await getRawSql().query(
+  const sourceStats = (await getRawSql().query(
     `${RANKED_VISITS},
      purchased as (select distinct visit_id from events where type = ${purchase})
      select
@@ -150,11 +152,11 @@ async function trafficSources(filters: ResolvedFilters): Promise<SourceRow[]> {
     params,
   )) as { source: string; entries: number; completions: number }[];
 
-  return rows.map((row) => ({
-    source: row.source,
-    entries: row.entries,
-    completions: row.completions,
-    conversion: rate(row.completions, row.entries),
+  return sourceStats.map((stat) => ({
+    source: stat.source,
+    entries: stat.entries,
+    completions: stat.completions,
+    conversion: rate(stat.completions, stat.entries),
   }));
 }
 
@@ -163,7 +165,7 @@ async function firstTouchAttribution(
 ): Promise<AttributionRow[]> {
   const params: unknown[] = [];
   const where = dateWhere('created_at', filters, params);
-  const rows = (await getRawSql().query(
+  const attribution = (await getRawSql().query(
     `select first_touch_source as source, count(*)::int as users
      from users
      ${where}
@@ -172,7 +174,7 @@ async function firstTouchAttribution(
     params,
   )) as AttributionRow[];
 
-  return rows;
+  return attribution;
 }
 
 async function lastTouchAttribution(
@@ -180,7 +182,7 @@ async function lastTouchAttribution(
 ): Promise<AttributionRow[]> {
   const params: unknown[] = [];
   const where = dateWhere('started_at', filters, params);
-  const rows = (await getRawSql().query(
+  const attribution = (await getRawSql().query(
     `select source, count(*)::int as users
      from (
        select source, row_number() over (partition by user_id order by started_at desc) as rn
@@ -194,7 +196,7 @@ async function lastTouchAttribution(
     params,
   )) as AttributionRow[];
 
-  return rows;
+  return attribution;
 }
 
 async function userList(filters: ResolvedFilters): Promise<UserRow[]> {
@@ -205,7 +207,7 @@ async function userList(filters: ResolvedFilters): Promise<UserRow[]> {
     ? `and u.created_at >= ${placeholder(params, filters.from)}`
     : '';
 
-  const rows = (await getRawSql().query(
+  const users = (await getRawSql().query(
     `${RANKED_VISITS}
      select
        u.id,
@@ -222,7 +224,7 @@ async function userList(filters: ResolvedFilters): Promise<UserRow[]> {
     params,
   )) as UserRow[];
 
-  return rows;
+  return users;
 }
 
 export type TimelineVisit = {
@@ -248,11 +250,11 @@ export type UserTimeline = {
 };
 
 export async function getSourceOptions(): Promise<string[]> {
-  const rows = (await getRawSql()`
+  const sources = (await getRawSql()`
     select distinct source from visits order by source
   `) as { source: string }[];
 
-  return rows.map((row) => row.source);
+  return sources.map((entry) => entry.source);
 }
 
 export async function getUserTimeline(
@@ -277,14 +279,14 @@ export async function getUserTimeline(
          from visits where user_id = $1 order by started_at asc`,
         [userId],
       )
-      .then((rows) => rows as TimelineVisit[]),
+      .then((visitRows) => visitRows as TimelineVisit[]),
     sql
       .query(
         `select type, visit_id as "visitId", created_at as "createdAt"
          from events where user_id = $1 order by created_at asc`,
         [userId],
       )
-      .then((rows) => rows as TimelineEvent[]),
+      .then((eventRows) => eventRows as TimelineEvent[]),
   ]);
 
   return {
@@ -303,7 +305,7 @@ async function activityOverTime(
   const quizStarted = placeholder(params, FunnelEvent.QuizStarted);
   const purchaseClicked = placeholder(params, FunnelEvent.PurchaseClicked);
   const where = visitWhere(filters, params, { includeAudience: true });
-  const rows = (await getRawSql().query(
+  const activity = (await getRawSql().query(
     `${RANKED_VISITS}
      select
        to_char(date_trunc('day', e.created_at), 'YYYY-MM-DD') as date,
@@ -316,7 +318,7 @@ async function activityOverTime(
     params,
   )) as ActivityPoint[];
 
-  return rows;
+  return activity;
 }
 
 export async function getDashboardData(

@@ -20,14 +20,24 @@ Next.js 16 (App Router) + TypeScript · Drizzle ORM + Neon (serverless Postgres)
 ## Layout
 
 - `src/app/` — pages (`/`, `/email`, `/paywall`, `/dashboard`) and API routes
-  (`/api/track`, `/api/funnel/email`).
-- `src/db/` — `schema.ts` (Drizzle tables), `funnel.ts` (write/read helpers used
-  by the funnel), `analytics.ts` (dashboard read queries), `index.ts` (lazy
-  Neon client + Drizzle instance).
+  (`/api/track`, `/api/funnel/email`, `/api/dashboard/users/[id]`).
+- `src/server/` — server-only logic, kept out of components:
+  - `repositories/` — data access, one per aggregate (`user`, `visit`, `event`,
+    `visitor`, `analytics`).
+  - `services/` — business logic (`funnelService`: tracking + identity).
+- `src/db/` — `schema.ts` (Drizzle tables + indexes), `index.ts` (lazy Neon
+  client + Drizzle instance).
 - `src/lib/` — framework-free helpers and constants (`env`, `routes`, `events`,
-  `cookies`, `jwt`, `utm`, `track-client`).
-- `src/components/` — React components (dashboard + funnel UI).
+  `cookies`, `jwt`, `utm`, `metrics`, `filters`, `validation`, `cn`,
+  `track-client`).
+- `src/components/funnel/` — funnel UI; `src/components/dashboard/` — dashboard
+  UI grouped by area (`charts/`, `tables/`, `timeline/`, `filters/`,
+  `feedback/`, `common/`) plus its own `hooks/`. One component per file.
 - `src/proxy.ts` — Basic Auth gate for `/dashboard` and `/api/dashboard`.
+
+Route handlers stay thin: parse + cookies, delegate to a service; services
+orchestrate repositories. Dashboard reads call `analyticsRepository` directly
+(read model, no business logic).
 
 ## Conventions
 
@@ -50,8 +60,9 @@ Next.js 16 (App Router) + TypeScript · Drizzle ORM + Neon (serverless Postgres)
 
 ```bash
 npm run dev        # local dev server
-npm run db:push    # push schema to the DB in .env.local
+npm run db:push    # push schema (incl. indexes) to the DB in .env.local
 npm run db:studio  # Drizzle Studio
+npm test           # Vitest unit tests (colocated *.test.ts)
 npm run smoke      # end-to-end funnel smoke test against a running server
 npm run build      # production build (also runs type-check)
 npx tsc --noEmit   # type-check only
