@@ -37,11 +37,11 @@ export default function PaywallPage() {
             <Check className="h-7 w-7 text-white" />
           </div>
           <h1 className="mt-4 text-2xl font-bold text-white">
-            You&apos;re in!
+            Welcome aboard!
           </h1>
           <p className="mt-2 text-white/60">
-            Thanks for your purchase. This is a mock checkout — no payment was
-            taken.
+            Your subscription is active. We&apos;ve sent your personalized plan
+            to your inbox — let&apos;s get started.
           </p>
         </div>
       </FunnelShell>
