@@ -95,6 +95,33 @@ src/
   db/                 Drizzle schema + lazy Neon client
 ```
 
+## Key decisions & trade-offs
+
+- **Email + JWT identity, no password.** The brief says an existing email should
+  be "authorized", so email is the identity and a signed JWT cookie keeps the
+  user recognized. Trade-off: not real authentication — right for a funnel, not
+  for an account system.
+- **New vs returning is derived, not stored.** Computed from visit order with a
+  window function rather than a boolean column — one source of truth, no drift.
+  Trade-off: a ranking query per request, mitigated by the `visits(user_id,
+  started_at)` index.
+- **Attribution split by lifetime.** First touch is frozen on the user at
+  signup; last touch is the source of the most recent visit. This is what makes
+  first ≠ last meaningful across repeat visits.
+- **Events in the same Postgres as users.** Simplest thing that works at MVP
+  volume; the append-only table is easy to move later (see below).
+- **Server-rendered purchase state on the paywall.** The page reads purchase
+  status server-side, so a returning buyer sees the success screen with no
+  loading flash or layout shift. Trade-off: the page is dynamic (not statically
+  cached) — negligible here.
+- **Basic Auth for the dashboard.** Internal analytics only — a single
+  credential pair via middleware beats wiring a full auth system for one screen.
+- **Drizzle for writes, raw SQL for analytics.** Window functions and
+  `filter (...)` aggregates read clearest as raw SQL; Drizzle keeps the funnel
+  writes type-safe.
+- **One Next.js app.** Funnel, dashboard, and API in a single deployable —
+  fewer moving parts than splitting a separate backend.
+
 ## Scaling note
 
 Hot columns are indexed (`events.type`, `events.visit_id`, `events(user_id,
