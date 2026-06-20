@@ -9,7 +9,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import type { FunnelStage } from '@/server/repositories/analyticsRepository';
+import type { FunnelStage } from '@/lib/metrics';
 import {
   AXIS_TICK,
   BAR_COLOR,

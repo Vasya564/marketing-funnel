@@ -1,4 +1,4 @@
-import type { FunnelStage } from '@/server/repositories/analyticsRepository';
+import type { FunnelStage } from '@/lib/metrics';
 
 export function FunnelStageCard({ stage }: { stage: FunnelStage }) {
   return (

@@ -4,8 +4,6 @@ import { ResolvedFilters } from '@/lib/filters';
 import { buildFunnel, rate } from '@/lib/metrics';
 import type { FunnelStage } from '@/lib/metrics';
 
-export type { FunnelStage };
-
 export type SourceRow = {
   source: string;
   entries: number;
