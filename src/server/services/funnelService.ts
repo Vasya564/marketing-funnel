@@ -87,4 +87,8 @@ export const funnelService = {
 
     return { userId, returning: Boolean(existingUser), visitId };
   },
+
+  async hasPurchased(userId: string): Promise<boolean> {
+    return eventRepository.hasPurchased(userId);
+  },
 };

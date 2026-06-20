@@ -8,6 +8,7 @@ export const ROUTES = {
 export const API_ROUTES = {
   track: '/api/track',
   funnelEmail: '/api/funnel/email',
+  funnelStatus: '/api/funnel/status',
 } as const;
 
 export const FUNNEL_STEPS = [

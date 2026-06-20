@@ -5,6 +5,7 @@ import { Check, Star } from 'lucide-react';
 import { FunnelShell } from '@/components/funnel/FunnelShell';
 import { EYEBROW, PRIMARY_BUTTON } from '@/components/funnel/styles';
 import { FunnelEvent } from '@/lib/events';
+import { API_ROUTES } from '@/lib/routes';
 import { trackEvent } from '@/lib/track-client';
 
 const PLAN_FEATURES = [
@@ -17,9 +18,26 @@ const PLAN_FEATURES = [
 export default function PaywallPage() {
   const [purchased, setPurchased] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     trackEvent(FunnelEvent.PaywallVisited);
+
+    fetch(API_ROUTES.funnelStatus, { signal: controller.signal })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((status: { purchased: boolean } | null) => {
+        setPurchased(Boolean(status?.purchased));
+        setChecking(false);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setChecking(false);
+        }
+      });
+
+    return () => controller.abort();
   }, []);
 
   async function handlePay() {
@@ -27,6 +45,14 @@ export default function PaywallPage() {
     await trackEvent(FunnelEvent.PurchaseClicked);
     setProcessing(false);
     setPurchased(true);
+  }
+
+  if (checking) {
+    return (
+      <FunnelShell currentStep={3}>
+        <p className="py-10 text-center text-sm text-white/40">Loading…</p>
+      </FunnelShell>
+    );
   }
 
   if (purchased) {
