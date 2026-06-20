@@ -37,7 +37,7 @@ export function AttributionChart({
       <BarChart
         data={rows}
         layout="vertical"
-        margin={{ left: 16 }}
+        margin={{ top: 4, right: 12, bottom: 4, left: 0 }}
         onClick={(state) => {
           const label = state?.activeLabel;
           if (label) {
@@ -60,7 +60,7 @@ export function AttributionChart({
         <YAxis
           type="category"
           dataKey="source"
-          width={90}
+          width={64}
           tick={AXIS_TICK}
           tickLine={false}
           axisLine={false}

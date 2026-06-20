@@ -4,8 +4,9 @@ import { RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { DashboardFilters, DATE_RANGES } from '@/lib/filters';
 import { useFilterNav } from '@/components/dashboard/hooks/useFilterNav';
-import { CARD_TITLE, SELECT, SELECT_OPTION } from '@/lib/dashboard/theme';
+import { CARD_TITLE, SELECT_OPTION } from '@/lib/dashboard/theme';
 import { FilterField } from './FilterField';
+import { FilterSelect } from './FilterSelect';
 
 export function FilterBar({
   filters,
@@ -40,10 +41,9 @@ export function FilterBar({
       </div>
 
       <FilterField label="Date range">
-        <select
+        <FilterSelect
           value={filters.range}
-          onChange={(event) => setParam('range', event.target.value)}
-          className={SELECT}
+          onChange={(value) => setParam('range', value)}
         >
           {DATE_RANGES.map((range) => (
             <option
@@ -54,14 +54,13 @@ export function FilterBar({
               {range.label}
             </option>
           ))}
-        </select>
+        </FilterSelect>
       </FilterField>
 
       <FilterField label="Source">
-        <select
+        <FilterSelect
           value={filters.source ?? ''}
-          onChange={(event) => setParam('source', event.target.value || null)}
-          className={SELECT}
+          onChange={(value) => setParam('source', value || null)}
         >
           <option value="" className={SELECT_OPTION}>
             All sources
@@ -71,14 +70,13 @@ export function FilterBar({
               {source}
             </option>
           ))}
-        </select>
+        </FilterSelect>
       </FilterField>
 
       <FilterField label="Audience">
-        <select
+        <FilterSelect
           value={filters.audience ?? ''}
-          onChange={(event) => setParam('audience', event.target.value || null)}
-          className={SELECT}
+          onChange={(value) => setParam('audience', value || null)}
         >
           <option value="" className={SELECT_OPTION}>
             All visits
@@ -89,7 +87,7 @@ export function FilterBar({
           <option value="returning" className={SELECT_OPTION}>
             Returning only
           </option>
-        </select>
+        </FilterSelect>
       </FilterField>
     </div>
   );
