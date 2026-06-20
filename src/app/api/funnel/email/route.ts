@@ -1,17 +1,8 @@
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import {
-  createUser,
-  ensureVisitor,
-  findUserByEmail,
-  getVisit,
-  linkVisitorToUser,
-  recordEvent,
-  startVisit,
-} from '@/db/funnel';
+import { funnelService } from '@/server/services/funnelService';
 import { signUserToken } from '@/lib/jwt';
-import { DIRECT_SOURCE, FunnelEvent } from '@/lib/events';
 import {
   AUTH_COOKIE,
   AUTH_MAX_AGE,
@@ -21,33 +12,13 @@ import {
   VISIT_MAX_AGE,
   cookieOptions,
 } from '@/lib/cookies';
-import { UtmParams } from '@/lib/utm';
+import { emailSchema } from '@/lib/validation';
 
-const emailSchema = z.object({ email: z.email() });
-
-const DIRECT_UTM: UtmParams = {
-  source: DIRECT_SOURCE,
-  medium: null,
-  campaign: null,
-};
-
-async function firstTouchFromVisit(visitId: string): Promise<UtmParams> {
-  const visit = await getVisit(visitId);
-
-  if (!visit) {
-    return DIRECT_UTM;
-  }
-
-  return {
-    source: visit.source,
-    medium: visit.utmMedium,
-    campaign: visit.utmCampaign,
-  };
-}
+const bodySchema = z.object({ email: emailSchema });
 
 export async function POST(request: NextRequest) {
   const payload = await request.json().catch(() => null);
-  const parsed = emailSchema.safeParse(payload);
+  const parsed = bodySchema.safeParse(payload);
 
   if (!parsed.success) {
     return NextResponse.json({ error: 'Invalid email' }, { status: 400 });
@@ -57,30 +28,19 @@ export async function POST(request: NextRequest) {
 
   const jar = await cookies();
   const visitorId = jar.get(VISITOR_COOKIE)?.value ?? crypto.randomUUID();
-  await ensureVisitor(visitorId);
+  const existingVisitId = jar.get(VISIT_COOKIE)?.value ?? null;
 
-  const visitId =
-    jar.get(VISIT_COOKIE)?.value ??
-    (await startVisit({ visitorId, userId: null, utm: DIRECT_UTM }));
-
-  const existingUser = await findUserByEmail(email);
-  const userId =
-    existingUser?.id ??
-    (await createUser({ email, utm: await firstTouchFromVisit(visitId) }));
-
-  await linkVisitorToUser(visitorId, userId);
-  await recordEvent({
-    visitId,
+  const { userId, returning, visitId } = await funnelService.captureEmail({
+    email,
     visitorId,
-    userId,
-    type: FunnelEvent.EmailSubmitted,
+    visitId: existingVisitId,
   });
 
-  const token = await signUserToken(userId);
+  const tokenValue = await signUserToken(userId);
 
   jar.set(VISITOR_COOKIE, visitorId, cookieOptions(VISITOR_MAX_AGE));
   jar.set(VISIT_COOKIE, visitId, cookieOptions(VISIT_MAX_AGE));
-  jar.set(AUTH_COOKIE, token, cookieOptions(AUTH_MAX_AGE));
+  jar.set(AUTH_COOKIE, tokenValue, cookieOptions(AUTH_MAX_AGE));
 
-  return NextResponse.json({ ok: true, returning: Boolean(existingUser) });
+  return NextResponse.json({ ok: true, returning });
 }

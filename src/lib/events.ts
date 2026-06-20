@@ -6,3 +6,10 @@ export enum FunnelEvent {
 }
 
 export const DIRECT_SOURCE = 'direct';
+
+export const EVENT_LABELS: Record<string, string> = {
+  [FunnelEvent.QuizStarted]: 'Quiz started',
+  [FunnelEvent.EmailSubmitted]: 'Email submitted',
+  [FunnelEvent.PaywallVisited]: 'Paywall visited',
+  [FunnelEvent.PurchaseClicked]: 'Purchase clicked',
+};

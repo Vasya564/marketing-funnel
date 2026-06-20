@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { ensureVisitor, recordEvent, startVisit } from '@/db/funnel';
+import { funnelService } from '@/server/services/funnelService';
 import { verifyUserToken } from '@/lib/jwt';
 import { DIRECT_SOURCE, FunnelEvent } from '@/lib/events';
 import {
@@ -45,19 +45,22 @@ export async function POST(request: NextRequest) {
 
   const jar = await cookies();
   const visitorId = jar.get(VISITOR_COOKIE)?.value ?? crypto.randomUUID();
-  await ensureVisitor(visitorId);
-
   const token = jar.get(AUTH_COOKIE)?.value;
   const userId = token ? await verifyUserToken(token) : null;
 
   const { type } = parsed.data;
   const existingVisitId =
-    type === FunnelEvent.QuizStarted ? null : jar.get(VISIT_COOKIE)?.value;
-  const visitId =
-    existingVisitId ??
-    (await startVisit({ visitorId, userId, utm: toUtm(parsed.data) }));
+    type === FunnelEvent.QuizStarted
+      ? null
+      : (jar.get(VISIT_COOKIE)?.value ?? null);
 
-  await recordEvent({ visitId, visitorId, userId, type });
+  const { visitId } = await funnelService.recordEvent({
+    visitorId,
+    existingVisitId,
+    userId,
+    type,
+    utm: toUtm(parsed.data),
+  });
 
   jar.set(VISITOR_COOKIE, visitorId, cookieOptions(VISITOR_MAX_AGE));
   jar.set(VISIT_COOKIE, visitId, cookieOptions(VISIT_MAX_AGE));
