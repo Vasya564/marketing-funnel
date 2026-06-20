@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { DashboardData } from '@/server/repositories/analyticsRepository';
 import type { DashboardFilters } from '@/lib/filters';
+import { BrandMark } from '@/components/BrandMark';
 import { useFilterNav } from './hooks/useFilterNav';
 import { ActivityChart } from './charts/ActivityChart';
 import { AttributionChart } from './charts/AttributionChart';
@@ -40,6 +41,12 @@ export function DashboardView({
       <div className="relative z-10 mx-auto flex max-w-7xl gap-6 px-6 py-10">
         <aside className="hidden w-60 shrink-0 lg:block">
           <div className="sticky top-10 space-y-6">
+            <div className="flex items-center gap-2">
+              <BrandMark />
+              <span className="text-sm font-semibold tracking-wide text-white/80">
+                PathFinder
+              </span>
+            </div>
             <div>
               <h1 className="bg-gradient-to-r from-white to-white/60 bg-clip-text text-2xl font-bold text-transparent">
                 Funnel Analytics

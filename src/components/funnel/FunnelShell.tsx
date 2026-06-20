@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { BrandMark } from '@/components/BrandMark';
 import { FunnelProgress } from './FunnelProgress';
 
 export function FunnelShell({
@@ -15,7 +16,7 @@ export function FunnelShell({
 
       <div className="relative z-10 w-full max-w-md">
         <div className="mb-6 flex items-center justify-center gap-2">
-          <span className="h-6 w-6 rounded-lg bg-gradient-to-br from-violet-400 to-indigo-500" />
+          <BrandMark />
           <span className="text-sm font-semibold tracking-wide text-white/80">
             PathFinder
           </span>
