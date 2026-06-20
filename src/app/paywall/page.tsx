@@ -50,7 +50,21 @@ export default function PaywallPage() {
   if (checking) {
     return (
       <FunnelShell currentStep={3}>
-        <p className="py-10 text-center text-sm text-white/40">Loading…</p>
+        <div className="animate-pulse">
+          <div className="h-3 w-28 rounded bg-white/10" />
+          <div className="mt-4 h-8 w-3/4 rounded bg-white/10" />
+          <div className="mt-3 h-4 w-full rounded bg-white/10" />
+
+          <div className="mt-6 space-y-3">
+            {Array.from({ length: PLAN_FEATURES.length }).map((_, index) => (
+              <div key={index} className="h-4 w-2/3 rounded bg-white/10" />
+            ))}
+          </div>
+
+          <div className="mx-auto mt-6 h-10 w-24 rounded bg-white/10" />
+          <div className="mt-6 h-12 w-full rounded-2xl bg-white/10" />
+          <div className="mx-auto mt-4 h-3 w-48 rounded bg-white/10" />
+        </div>
       </FunnelShell>
     );
   }
